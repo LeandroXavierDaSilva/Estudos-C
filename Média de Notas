@@ -1,0 +1,39 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+struct aluno{
+    float n1;
+    float n2;
+    float media;
+};
+
+float media(float nota1, float nota2);
+
+int main(){
+
+    struct aluno a1, a2;
+    
+    printf("Digite a primeira nota do aluno 1: ");
+    scanf("%f", &a1.n1);
+
+    printf("Digite a segunda nota do aluno 1: ");
+    scanf("%f", &a1.n2);
+
+    printf("Digite a primeira nota do aluno 2: ");
+    scanf("%f", &a2.n1);
+
+    printf("Digite a segunda nota do aluno 2: ");
+    scanf("%f", &a2.n2);
+
+    a1.media = media(a1.n1, a1.n2);
+    a2.media = media(a2.n1, a2.n2);
+
+    printf("\nMédia do aluno 1: %.2f\n", a1.media);
+    printf("Média do aluno 2: %.2f\n", a2.media);
+
+return 0;
+}
+
+float media(float nota1, float nota2){
+    return ((nota1 + nota2) / 2);
+}
