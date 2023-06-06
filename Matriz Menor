@@ -1,0 +1,89 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+typedef struct {
+    int rows;
+    int columns;
+} MatrixSize;
+
+typedef struct {
+    int** data;
+    MatrixSize size;
+} Matrix;
+
+Matrix createMatrix(int rows, int columns) {
+    Matrix matrix;
+    matrix.size.rows = rows;
+    matrix.size.columns = columns;
+    matrix.data = (int**)malloc(rows * sizeof(int*));
+
+    for (int i = 0; i < rows; i++) {
+        matrix.data[i] = (int*)malloc(columns * sizeof(int));
+    }
+
+    return matrix;
+}
+
+void fillMatrixRandom(Matrix* matrix) {
+    srand(time(NULL));
+
+    for (int i = 0; i < matrix->size.rows; i++) {
+        for (int j = 0; j < matrix->size.columns; j++) {
+            matrix->data[i][j] = rand() % 100; // Gera números aleatórios de 0 a 99
+        }
+    }
+}
+
+void printMatrix(Matrix matrix) {
+    for (int i = 0; i < matrix.size.rows; i++) {
+        for (int j = 0; j < matrix.size.columns; j++) {
+            printf("%d\t", matrix.data[i][j]);
+        }
+        printf("\n");
+    }
+}
+
+Matrix createSubMatrix(Matrix matrix, int startRow, int startColumn, int subRows, int subColumns) {
+    Matrix subMatrix = createMatrix(subRows, subColumns);
+
+    for (int i = 0; i < subRows; i++) {
+        for (int j = 0; j < subColumns; j++) {
+            subMatrix.data[i][j] = matrix.data[startRow + i][startColumn + j];
+        }
+    }
+
+    return subMatrix;
+}
+
+void freeMatrix(Matrix* matrix) {
+    for (int i = 0; i < matrix->size.rows; i++) {
+        free(matrix->data[i]);
+    }
+    free(matrix->data);
+}
+
+int main() {
+    // Criação da matriz maior
+    MatrixSize totalSize;
+    totalSize.rows = 5;
+    totalSize.columns = 5;
+
+    Matrix totalMatrix = createMatrix(totalSize.rows, totalSize.columns);
+    fillMatrixRandom(&totalMatrix);
+
+    printf("Matriz Total:\n");
+    printMatrix(totalMatrix);
+
+    // Criação da matriz menor com base na matriz maior
+    Matrix subMatrix = createSubMatrix(totalMatrix, 1, 1, 3, 3);
+
+    printf("\nMatriz Sub:\n");
+    printMatrix(subMatrix);
+
+    // Liberação de memória
+    freeMatrix(&totalMatrix);
+    freeMatrix(&subMatrix);
+
+    return 0;
+}
