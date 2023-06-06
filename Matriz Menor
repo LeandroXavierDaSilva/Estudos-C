@@ -3,87 +3,87 @@
 #include <time.h>
 
 typedef struct {
-    int rows;
-    int columns;
-} MatrixSize;
+    int linhas;
+    int colunas;
+} TamanhoMatriz;
 
 typedef struct {
-    int** data;
-    MatrixSize size;
-} Matrix;
+    int** dados;
+    TamanhoMatriz tamanho;
+} Matriz;
 
-Matrix createMatrix(int rows, int columns) {
-    Matrix matrix;
-    matrix.size.rows = rows;
-    matrix.size.columns = columns;
-    matrix.data = (int**)malloc(rows * sizeof(int*));
+Matriz criarMatriz(int linhas, int colunas) {
+    Matriz matriz;
+    matriz.tamanho.linhas = linhas;
+    matriz.tamanho.colunas = colunas;
+    matriz.dados = (int**)malloc(linhas * sizeof(int*));
 
-    for (int i = 0; i < rows; i++) {
-        matrix.data[i] = (int*)malloc(columns * sizeof(int));
+    for (int i = 0; i < linhas; i++) {
+        matriz.dados[i] = (int*)malloc(colunas * sizeof(int));
     }
 
-    return matrix;
+    return matriz;
 }
 
-void fillMatrixRandom(Matrix* matrix) {
+void preencherMatrizAleatoriamente(Matriz* matriz) {
     srand(time(NULL));
 
-    for (int i = 0; i < matrix->size.rows; i++) {
-        for (int j = 0; j < matrix->size.columns; j++) {
-            matrix->data[i][j] = rand() % 100; // Gera números aleatórios de 0 a 99
+    for (int i = 0; i < matriz->tamanho.linhas; i++) {
+        for (int j = 0; j < matriz->tamanho.colunas; j++) {
+            matriz->dados[i][j] = rand() % 100; // Gera números aleatórios de 0 a 99
         }
     }
 }
 
-void printMatrix(Matrix matrix) {
-    for (int i = 0; i < matrix.size.rows; i++) {
-        for (int j = 0; j < matrix.size.columns; j++) {
-            printf("%d\t", matrix.data[i][j]);
+void imprimirMatriz(Matriz matriz) {
+    for (int i = 0; i < matriz.tamanho.linhas; i++) {
+        for (int j = 0; j < matriz.tamanho.colunas; j++) {
+            printf("%d\t", matriz.dados[i][j]);
         }
         printf("\n");
     }
 }
 
-Matrix createSubMatrix(Matrix matrix, int startRow, int startColumn, int subRows, int subColumns) {
-    Matrix subMatrix = createMatrix(subRows, subColumns);
+Matriz criarSubmatriz(Matriz matriz, int linhaInicial, int colunaInicial, int sublinhas, int subcolunas) {
+    Matriz submatriz = criarMatriz(sublinhas, subcolunas);
 
-    for (int i = 0; i < subRows; i++) {
-        for (int j = 0; j < subColumns; j++) {
-            subMatrix.data[i][j] = matrix.data[startRow + i][startColumn + j];
+    for (int i = 0; i < sublinhas; i++) {
+        for (int j = 0; j < subcolunas; j++) {
+            submatriz.dados[i][j] = matriz.dados[linhaInicial + i][colunaInicial + j];
         }
     }
 
-    return subMatrix;
+    return submatriz;
 }
 
-void freeMatrix(Matrix* matrix) {
-    for (int i = 0; i < matrix->size.rows; i++) {
-        free(matrix->data[i]);
+void liberarMatriz(Matriz* matriz) {
+    for (int i = 0; i < matriz->tamanho.linhas; i++) {
+        free(matriz->dados[i]);
     }
-    free(matrix->data);
+    free(matriz->dados);
 }
 
 int main() {
     // Criação da matriz maior
-    MatrixSize totalSize;
-    totalSize.rows = 5;
-    totalSize.columns = 5;
+    TamanhoMatriz tamanhoTotal;
+    tamanhoTotal.linhas = 5;
+    tamanhoTotal.colunas = 5;
 
-    Matrix totalMatrix = createMatrix(totalSize.rows, totalSize.columns);
-    fillMatrixRandom(&totalMatrix);
+    Matriz matrizTotal = criarMatriz(tamanhoTotal.linhas, tamanhoTotal.colunas);
+    preencherMatrizAleatoriamente(&matrizTotal);
 
     printf("Matriz Total:\n");
-    printMatrix(totalMatrix);
+    imprimirMatriz(matrizTotal);
 
     // Criação da matriz menor com base na matriz maior
-    Matrix subMatrix = createSubMatrix(totalMatrix, 1, 1, 3, 3);
+    Matriz submatriz = criarSubmatriz(matrizTotal, 1, 1, 3, 3);
 
     printf("\nMatriz Sub:\n");
-    printMatrix(subMatrix);
+    imprimirMatriz(submatriz);
 
     // Liberação de memória
-    freeMatrix(&totalMatrix);
-    freeMatrix(&subMatrix);
+    liberarMatriz(&matrizTotal);
+    liberarMatriz(&submatriz);
 
     return 0;
 }
