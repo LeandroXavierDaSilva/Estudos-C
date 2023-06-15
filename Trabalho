@@ -1,0 +1,119 @@
+#include <stdio.h>
+
+#include <stdlib.h>
+
+#define LARGURA 100
+
+#define ALTURA 100
+
+#define NUM_IMAGENS 100
+
+void gerarSubImagens(const char* arquivoImagemOrigem) {
+
+    FILE* imagemOrigem = fopen(arquivoImagemOrigem, "rb");
+
+    if (imagemOrigem == NULL) {
+
+        printf("Erro ao abrir o arquivo de imagem de origem.\n");
+
+        return;
+
+    }
+
+    // Lendo o cabeçalho da imagem de origem
+
+    char formato[3];
+
+    int largura, altura, valorMax;
+
+    fscanf(imagemOrigem, "%s %d %d %d\n", formato, &largura, &altura, &valorMax);
+
+    // Alocando memória para a imagem de origem
+
+    unsigned char** dadosImagem = (unsigned char**)malloc(altura * sizeof(unsigned char*));
+
+    for (int i = 0; i < altura; i++) {
+
+        dadosImagem[i] = (unsigned char*)malloc(largura * sizeof(unsigned char));
+
+    }
+
+    // Lendo os dados da imagem de origem
+
+    for (int i = 0; i < altura; i++) {
+
+        for (int j = 0; j < largura; j++) {
+
+            fread(&dadosImagem[i][j], sizeof(unsigned char), 1, imagemOrigem);
+
+        }
+
+    }
+
+    fclose(imagemOrigem);
+
+    // Gerando as sub-imagens
+
+    for (int i = 0; i < NUM_IMAGENS; i++) {
+
+        // Criando o nome do arquivo de saída
+
+        char nomeArquivoSaida[20];
+
+        sprintf(nomeArquivoSaida, "subimagem_%d.pgm", i);
+
+        // Criando o arquivo de saída
+
+        FILE* imagemSaida = fopen(nomeArquivoSaida, "wb");
+
+        if (imagemSaida == NULL) {
+
+            printf("Erro ao criar o arquivo de sub-imagem.\n");
+
+            return;
+
+        }
+
+        // Escrevendo o cabeçalho da sub-imagem
+
+        fprintf(imagemSaida, "P5\n%d %d\n%d\n", LARGURA, ALTURA, valorMax);
+
+        // Escrevendo os dados da sub-imagem
+
+        for (int y = 0; y < ALTURA; y++) {
+
+            for (int x = 0; x < LARGURA; x++) {
+
+                fwrite(&dadosImagem[y][x], sizeof(unsigned char), 1, imagemSaida);
+
+            }
+
+        }
+
+        fclose(imagemSaida);
+
+    }
+
+    // Liberando a memória alocada
+
+    for (int i = 0; i < altura; i++) {
+
+        free(dadosImagem[i]);
+
+    }
+
+    free(dadosImagem);
+
+    printf("As sub-imagens foram geradas com sucesso.\n");
+
+}
+
+int main() {
+
+    const char* arquivoImagemOrigem = "imagem_origem.pgm";
+
+    gerarSubImagens(arquivoImagemOrigem);
+
+    return 0;
+
+}
