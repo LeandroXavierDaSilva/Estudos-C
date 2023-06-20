@@ -1,119 +1,136 @@
 #include <stdio.h>
-
 #include <stdlib.h>
+#include <time.h>
 
-#define LARGURA 100
+#define NUM_SUB_IMAGENS 100
 
-#define ALTURA 100
+struct ImagemPGM {
+    int largura;
+    int altura;
+    int valorMax;
+    unsigned char** pixels;
+};
 
-#define NUM_IMAGENS 100
+struct ImagemPGM* lerImagemPGM(const char* nomeArquivo) {
+    FILE* arquivo = fopen(nomeArquivo, "rb");
 
-void gerarSubImagens(const char* arquivoImagemOrigem) {
-
-    FILE* imagemOrigem = fopen(arquivoImagemOrigem, "rb");
-
-    if (imagemOrigem == NULL) {
-
-        printf("Erro ao abrir o arquivo de imagem de origem.\n");
-
-        return;
-
+    if (arquivo == NULL) {
+        printf("Erro ao abrir o arquivo de imagem.\n");
+        return NULL;
     }
 
-    // Lendo o cabeçalho da imagem de origem
-
+    // Lendo o cabeçalho da imagem PGM
     char formato[3];
-
     int largura, altura, valorMax;
+    fscanf(arquivo, "%s %d %d %d", formato, &largura, &altura, &valorMax);
 
-    fscanf(imagemOrigem, "%s %d %d %d\n", formato, &largura, &altura, &valorMax);
+    // Alocando memória para a estrutura da imagem
+    struct ImagemPGM* imagem = (struct ImagemPGM*)malloc(sizeof(struct ImagemPGM));
+    imagem->largura = largura;
+    imagem->altura = altura;
+    imagem->valorMax = valorMax;
 
-    // Alocando memória para a imagem de origem
-
-    unsigned char** dadosImagem = (unsigned char**)malloc(altura * sizeof(unsigned char*));
-
+    // Alocando memória para os pixels da imagem
+    imagem->pixels = (unsigned char**)malloc(altura * sizeof(unsigned char*));
     for (int i = 0; i < altura; i++) {
-
-        dadosImagem[i] = (unsigned char*)malloc(largura * sizeof(unsigned char));
-
+        imagem->pixels[i] = (unsigned char*)malloc(largura * sizeof(unsigned char));
     }
 
-    // Lendo os dados da imagem de origem
-
+    // Lendo os dados dos pixels da imagem
     for (int i = 0; i < altura; i++) {
-
-        for (int j = 0; j < largura; j++) {
-
-            fread(&dadosImagem[i][j], sizeof(unsigned char), 1, imagemOrigem);
-
-        }
-
+        fread(imagem->pixels[i], sizeof(unsigned char), largura, arquivo);
     }
 
-    fclose(imagemOrigem);
+    fclose(arquivo);
+    return imagem;
+}
 
-    // Gerando as sub-imagens
+void liberarImagemPGM(struct ImagemPGM* imagem) {
+    for (int i = 0; i < imagem->altura; i++) {
+        free(imagem->pixels[i]);
+    }
+    free(imagem->pixels);
+    free(imagem);
+}
 
-    for (int i = 0; i < NUM_IMAGENS; i++) {
+void salvarSubImagemPGM(const char* nomeArquivo, struct ImagemPGM* subImagem) {
+    FILE* arquivo = fopen(nomeArquivo, "wb");
 
-        // Criando o nome do arquivo de saída
+    if (arquivo == NULL) {
+        printf("Erro ao criar o arquivo de sub-imagem.\n");
+        return;
+    }
 
-        char nomeArquivoSaida[20];
+    // Escrevendo o cabeçalho da sub-imagem PGM
+    fprintf(arquivo, "P5\n%d %d\n%d\n", subImagem->largura, subImagem->altura, subImagem->valorMax);
 
-        sprintf(nomeArquivoSaida, "subimagem_%d.pgm", i);
+    // Escrevendo os dados dos pixels da sub-imagem
+    for (int i = 0; i < subImagem->altura; i++) {
+        fwrite(subImagem->pixels[i], sizeof(unsigned char), subImagem->largura, arquivo);
+    }
 
-        // Criando o arquivo de saída
+    fclose(arquivo);
+}
 
-        FILE* imagemSaida = fopen(nomeArquivoSaida, "wb");
+void selecionarSubImagensAleatorias(struct ImagemPGM* imagem, int larguraSubImagem, int alturaSubImagem) {
+    srand(time(NULL));
 
-        if (imagemSaida == NULL) {
+    int limiteHorizontal = imagem->largura - larguraSubImagem;
+    int limiteVertical = imagem->altura - alturaSubImagem;
 
-            printf("Erro ao criar o arquivo de sub-imagem.\n");
+    for (int i = 0; i < NUM_SUB_IMAGENS; i++) {
+        // Gerando coordenadas aleatórias para a sub-imagem
+        int posX = rand() % limiteHorizontal;
+        int posY = rand() % limiteVertical;
 
-            return;
+        // Criando a sub-imagem
+        struct ImagemPGM* subImagem = (struct ImagemPGM*)malloc(sizeof(struct ImagemPGM));
+        subImagem->largura = larguraSubImagem;
+        subImagem->altura = alturaSubImagem;
+        subImagem->valorMax = imagem->valorMax;
 
+        // Alocando memória para os pixels da sub-imagem
+        subImagem->pixels = (unsigned char**)malloc(alturaSubImagem * sizeof(unsigned char*));
+        for (int j = 0; j < alturaSubImagem; j++) {
+            subImagem->pixels[j] = (unsigned char*)malloc(larguraSubImagem * sizeof(unsigned char));
         }
 
-        // Escrevendo o cabeçalho da sub-imagem
-
-        fprintf(imagemSaida, "P5\n%d %d\n%d\n", LARGURA, ALTURA, valorMax);
-
-        // Escrevendo os dados da sub-imagem
-
-        for (int y = 0; y < ALTURA; y++) {
-
-            for (int x = 0; x < LARGURA; x++) {
-
-                fwrite(&dadosImagem[y][x], sizeof(unsigned char), 1, imagemSaida);
-
+        // Copiando os pixels da sub-imagem da imagem original
+        for (int y = 0; y < alturaSubImagem; y++) {
+            for (int x = 0; x < larguraSubImagem; x++) {
+                subImagem->pixels[y][x] = imagem->pixels[posY + y][posX + x];
             }
-
         }
 
-        fclose(imagemSaida);
+        // Salvando a sub-imagem em um arquivo
+        char nomeArquivo[20];
+        sprintf(nomeArquivo, "subimagem_%d.pgm", i);
+        salvarSubImagemPGM(nomeArquivo, subImagem);
 
+        // Liberando a memória alocada para a sub-imagem
+        for (int j = 0; j < alturaSubImagem; j++) {
+            free(subImagem->pixels[j]);
+        }
+        free(subImagem->pixels);
+        free(subImagem);
     }
-
-    // Liberando a memória alocada
-
-    for (int i = 0; i < altura; i++) {
-
-        free(dadosImagem[i]);
-
-    }
-
-    free(dadosImagem);
-
-    printf("As sub-imagens foram geradas com sucesso.\n");
-
 }
 
 int main() {
+    const char* arquivoImagem = "columns.pgm";
+    int larguraSubImagem = 100;
+    int alturaSubImagem = 100;
 
-    const char* arquivoImagemOrigem = "imagem_origem.pgm";
+    struct ImagemPGM* imagem = lerImagemPGM(arquivoImagem);
+    if (imagem == NULL) {
+        return 1;
+    }
 
-    gerarSubImagens(arquivoImagemOrigem);
+    selecionarSubImagensAleatorias(imagem, larguraSubImagem, alturaSubImagem);
+
+    liberarImagemPGM(imagem);
+
+    printf("As sub-imagens foram geradas com sucesso.\n");
 
     return 0;
-
 }
