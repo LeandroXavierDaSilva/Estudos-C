@@ -1,8 +1,8 @@
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <time.h>
 
-#define NUM_SUB_IMAGENS 100
+#define NUM_SUB_IMAGENS 10
 
 struct ImagemPGM {
     int largura;
@@ -12,7 +12,7 @@ struct ImagemPGM {
 };
 
 struct ImagemPGM* lerImagemPGM(const char* nomeArquivo) {
-    FILE* arquivo = fopen(nomeArquivo, "rb");
+    FILE* arquivo = fopen(nomeArquivo, "r");
 
     if (arquivo == NULL) {
         printf("Erro ao abrir o arquivo de imagem.\n");
@@ -22,7 +22,7 @@ struct ImagemPGM* lerImagemPGM(const char* nomeArquivo) {
     // Lendo o cabeçalho da imagem PGM
     char formato[3];
     int largura, altura, valorMax;
-    fscanf(arquivo, "%s %d %d %d", formato, &largura, &altura, &valorMax);
+    fscanf(arquivo, "%s\n%d %d\n%d\n", formato, &largura, &altura, &valorMax);
 
     // Alocando memória para a estrutura da imagem
     struct ImagemPGM* imagem = (struct ImagemPGM*)malloc(sizeof(struct ImagemPGM));
@@ -38,7 +38,9 @@ struct ImagemPGM* lerImagemPGM(const char* nomeArquivo) {
 
     // Lendo os dados dos pixels da imagem
     for (int i = 0; i < altura; i++) {
-        fread(imagem->pixels[i], sizeof(unsigned char), largura, arquivo);
+        for (int j = 0; j < largura; j++) {
+            fscanf(arquivo, "%hhu", &imagem->pixels[i][j]);
+        }
     }
 
     fclose(arquivo);
@@ -54,7 +56,7 @@ void liberarImagemPGM(struct ImagemPGM* imagem) {
 }
 
 void salvarSubImagemPGM(const char* nomeArquivo, struct ImagemPGM* subImagem) {
-    FILE* arquivo = fopen(nomeArquivo, "wb");
+    FILE* arquivo = fopen(nomeArquivo, "w");
 
     if (arquivo == NULL) {
         printf("Erro ao criar o arquivo de sub-imagem.\n");
@@ -62,11 +64,14 @@ void salvarSubImagemPGM(const char* nomeArquivo, struct ImagemPGM* subImagem) {
     }
 
     // Escrevendo o cabeçalho da sub-imagem PGM
-    fprintf(arquivo, "P5\n%d %d\n%d\n", subImagem->largura, subImagem->altura, subImagem->valorMax);
+    fprintf(arquivo, "P2\n%d %d\n%d\n", subImagem->largura, subImagem->altura, subImagem->valorMax);
 
     // Escrevendo os dados dos pixels da sub-imagem
     for (int i = 0; i < subImagem->altura; i++) {
-        fwrite(subImagem->pixels[i], sizeof(unsigned char), subImagem->largura, arquivo);
+        for (int j = 0; j < subImagem->largura; j++) {
+            fprintf(arquivo, "%hhu ", subImagem->pixels[i][j]);
+        }
+        fprintf(arquivo, "\n");
     }
 
     fclose(arquivo);
